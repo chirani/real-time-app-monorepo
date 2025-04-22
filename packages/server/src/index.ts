@@ -1,22 +1,23 @@
 import { Hono } from "hono";
+import { invalidateAllSessions } from "./lib/auth";
 
 const app = new Hono();
 
-app.get("/", (c) => {
-  return c.text("Hello Hono!");
-});
+const authApi = new Hono()
+  .get("/", (c) => {
+    return c.text("Hello Hono!");
+  })
+  .post("/signup", (c) => {
+    return c.text("Hello Hono!");
+  })
+  .post("/login", (c) => {
+    return c.text("Hello Hono!");
+  })
+  .post("/logout", (c) => {
+    return c.text("Hello Hono!");
+  });
 
-app.get("/signup", (c) => {
-  return c.text("Hello Hono!");
-});
-
-app.get("/login", (c) => {
-  return c.text("Hello Hono!");
-});
-
-app.get("/logout", (c) => {
-  return c.text("Hello Hono!");
-});
+app.route("/api/auth", authApi);
 
 export default {
   port: 8110,

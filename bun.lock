@@ -29,6 +29,10 @@
         "@types/bun": "latest",
       },
     },
+    "packages/shared": {
+      "name": "shared",
+      "version": "0.0.1",
+    },
     "packages/web": {
       "name": "web",
       "dependencies": {
@@ -844,6 +848,8 @@
     "seroval-plugins": ["seroval-plugins@1.2.1", "", { "peerDependencies": { "seroval": "^1.0" } }, "sha512-H5vs53+39+x4Udwp4J5rNZfgFuA+Lt+uU+09w1gYBVWomtAl98B+E9w7yC05Xc81/HgLvJdlyqJbU0fJCKCmdw=="],
 
     "server": ["server@workspace:packages/server"],
+
+    "shared": ["shared@workspace:packages/shared"],
 
     "shebang-command": ["shebang-command@2.0.0", "", { "dependencies": { "shebang-regex": "^3.0.0" } }, "sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA=="],
 
