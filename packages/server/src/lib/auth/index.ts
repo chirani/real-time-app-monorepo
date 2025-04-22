@@ -1,6 +1,6 @@
-import { userTable, sessionTable } from "shared/db/schema";
-import db from "shared/db";
-import type { User, Session } from "shared/db/schema";
+import { userTable, sessionTable } from "../../../db/schema";
+import db from "../../../db";
+import type { User, Session } from "../../../db/schema";
 import { eq } from "drizzle-orm";
 import {
   encodeBase32LowerCaseNoPadding,
