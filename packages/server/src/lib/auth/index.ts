@@ -14,6 +14,8 @@ export function generateSessionToken(): string {
   const token = encodeBase32LowerCaseNoPadding(bytes);
   return token;
 }
+export const SECONDS_IN_A_MONTH = 1000 * 60 * 60 * 24 * 30;
+export const SECONDS_IN_A_FORTNIGHT = 1000 * 60 * 60 * 24 * 15;
 
 export async function createSession(
   token: string,
@@ -23,7 +25,7 @@ export async function createSession(
   const session: Session = {
     id: sessionId,
     userId,
-    expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
+    expiresAt: new Date(Date.now() + SECONDS_IN_A_MONTH),
   };
   await db.insert(sessionTable).values(session);
   return session;
@@ -46,8 +48,8 @@ export async function validateSessionToken(
     await db.delete(sessionTable).where(eq(sessionTable.id, session.id));
     return { session: null, user: null };
   }
-  if (Date.now() >= session.expiresAt.getTime() - 1000 * 60 * 60 * 24 * 15) {
-    session.expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
+  if (Date.now() >= session.expiresAt.getTime() - SECONDS_IN_A_FORTNIGHT) {
+    session.expiresAt = new Date(Date.now() + SECONDS_IN_A_MONTH);
     await db
       .update(sessionTable)
       .set({

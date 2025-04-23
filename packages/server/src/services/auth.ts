@@ -6,11 +6,6 @@ import db from "../../db";
 import { userTable } from "../../db/schema";
 import { eq } from "drizzle-orm";
 
-const schema = z.object({
-  name: z.string(),
-  age: z.number(),
-});
-
 export const loginSchema = z.object({
   email: z.string(),
   password: z.string(),
@@ -23,15 +18,15 @@ export const signupSchema = z.object({
 });
 
 export const authApi = new Hono()
-  .get("/", (c) => {
-    return c.text("Hello Hono!");
-  })
   .post("/signup", zValidator("json", signupSchema), (c) => {
     const data = c.req.valid("json");
-    return c.json({
-      success: true,
-      message: `registering ${data.email} with ${data.email}`,
-    });
+    return c.json(
+      {
+        success: true,
+        message: `registering ${data.username} with ${data.email}`,
+      },
+      201
+    );
   })
   .post("/login", zValidator("json", loginSchema), async (c) => {
     const data = c.req.valid("json");
