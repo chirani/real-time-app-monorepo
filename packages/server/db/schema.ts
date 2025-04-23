@@ -3,6 +3,8 @@ import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
 import type { InferSelectModel } from "drizzle-orm";
 
 export const userTable = sqliteTable("user", {
+  email: text("email").unique().notNull(),
+  username: text("username").unique().notNull(),
   id: integer("id").primaryKey(),
 });
 
