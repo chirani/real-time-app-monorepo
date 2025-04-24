@@ -8,14 +8,15 @@ import {
 } from "@oslojs/encoding";
 import { sha256 } from "@oslojs/crypto/sha2";
 
+export const SECONDS_IN_A_MONTH = 1000 * 60 * 60 * 24 * 30;
+export const SECONDS_IN_A_FORTNIGHT = 1000 * 60 * 60 * 24 * 15;
+
 export function generateSessionToken(): string {
   const bytes = new Uint8Array(20);
   crypto.getRandomValues(bytes);
   const token = encodeBase32LowerCaseNoPadding(bytes);
   return token;
 }
-export const SECONDS_IN_A_MONTH = 1000 * 60 * 60 * 24 * 30;
-export const SECONDS_IN_A_FORTNIGHT = 1000 * 60 * 60 * 24 * 15;
 
 export async function createSession(
   token: string,
@@ -40,9 +41,11 @@ export async function validateSessionToken(
     .from(sessionTable)
     .innerJoin(userTable, eq(sessionTable.userId, userTable.id))
     .where(eq(sessionTable.id, sessionId));
+
   if (result.length < 1) {
     return { session: null, user: null };
   }
+
   const { user, session } = result[0];
   if (Date.now() >= session.expiresAt.getTime()) {
     await db.delete(sessionTable).where(eq(sessionTable.id, session.id));
