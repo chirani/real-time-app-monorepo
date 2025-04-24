@@ -5,6 +5,7 @@ import type { InferSelectModel } from "drizzle-orm";
 export const userTable = sqliteTable("user", {
   email: text("email").unique().notNull(),
   username: text("username").unique().notNull(),
+  hashedPassword: text("hashed-password").notNull(),
   id: integer("id").primaryKey(),
 });
 
