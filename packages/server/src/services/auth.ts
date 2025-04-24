@@ -1,10 +1,11 @@
 import { z } from "zod";
-import { createSession } from "../lib/auth";
+import { createSession, generateSessionToken } from "../lib/auth";
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import db from "../../db";
 import { userTable } from "../../db/schema";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
+import { ProblemJson } from "../types";
 
 export const loginSchema = z.object({
   email: z.string(),
@@ -12,18 +13,49 @@ export const loginSchema = z.object({
 });
 
 export const signupSchema = z.object({
-  username: z.string(),
-  email: z.string(),
-  password: z.string(),
+  username: z
+    .string()
+    .min(5, "username is too short")
+    .max(25, "username is too long"),
+  email: z.string().email("not a valid email"),
+  password: z.string().min(8, "Password is too short"),
 });
 
 export const authApi = new Hono()
-  .post("/signup", zValidator("json", signupSchema), (c) => {
+  .post("/signup", zValidator("json", signupSchema), async (c) => {
     const data = c.req.valid("json");
+
+    const usersWithMatchingIdentifiers = await db
+      .select()
+      .from(userTable)
+      .where(
+        or(
+          eq(userTable.email, data.email),
+          eq(userTable.username, data.username)
+        )
+      )
+      .limit(1);
+
+    if (usersWithMatchingIdentifiers.length) {
+      return c.json(
+        {
+          status: 409,
+          title: `email or username are already taken`,
+        } as ProblemJson,
+        409
+      );
+    }
+
+    // Hashing Password::
+    const hashedPassword = await Bun.password.hash(data.password);
+
+    // Creating A New User::
+    await db.insert(userTable).values({ ...data, hashedPassword });
+
     return c.json(
       {
-        success: true,
-        message: `registering ${data.username} with ${data.email}`,
+        status: 201,
+        title: `user ${data.username} created successfully`,
       },
       201
     );
@@ -44,7 +76,8 @@ export const authApi = new Hono()
       });
     }
 
-    await createSession("", userdata[0].id);
+    const generatedToken = generateSessionToken();
+    await createSession(generatedToken, userdata[0].id);
 
     return c.json({
       success: true,
