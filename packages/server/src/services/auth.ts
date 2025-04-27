@@ -1,11 +1,17 @@
 import { z } from "zod";
-import { createSession, generateSessionToken } from "../lib/auth";
+import {
+  createSession,
+  generateSessionToken,
+  invalidateAllSessions,
+  validateSessionToken,
+} from "../lib/auth";
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import db from "../../db";
 import { userTable } from "../../db/schema";
 import { eq, or } from "drizzle-orm";
 import { ProblemJson } from "../types";
+import { getCookie } from "hono/cookie";
 
 export const loginSchema = z.object({
   email: z.string(),
@@ -25,7 +31,8 @@ export const authApi = new Hono()
   .post("/signup", zValidator("json", signupSchema), async (c) => {
     const data = c.req.valid("json");
 
-    const usersWithMatchingIdentifiers = await db
+    // Check if username or email are used
+    const usersList = await db
       .select()
       .from(userTable)
       .where(
@@ -36,11 +43,11 @@ export const authApi = new Hono()
       )
       .limit(1);
 
-    if (usersWithMatchingIdentifiers.length) {
+    if (usersList.length) {
       return c.json(
         {
           status: 409,
-          title: `email or username are already taken`,
+          title: "email or username are already taken",
         } as ProblemJson,
         409
       );
@@ -50,7 +57,17 @@ export const authApi = new Hono()
     const hashedPassword = await Bun.password.hash(data.password);
 
     // Creating A New User::
-    await db.insert(userTable).values({ ...data, hashedPassword });
+    const newUser = db
+      .insert(userTable)
+      .values({ ...data, hashedPassword })
+      .returning()
+      .get();
+
+    const generatedToken = generateSessionToken();
+    await createSession(generatedToken, newUser.id);
+    const cookies = new Bun.CookieMap();
+
+    cookies.set("auth_w", generatedToken);
 
     return c.json(
       {
@@ -70,10 +87,13 @@ export const authApi = new Hono()
       .limit(1);
 
     if (userdata.length === 0) {
-      return c.json({
-        error: 404,
-        message: `There is no user for this email: ${data.email}`,
-      });
+      return c.json(
+        {
+          status: 404,
+          title: `There is no user for this email: ${data.email}`,
+        } as ProblemJson,
+        404
+      );
     }
 
     const generatedToken = generateSessionToken();
@@ -84,6 +104,24 @@ export const authApi = new Hono()
       message: `${data.email} is ${data.password}`,
     });
   })
-  .post("/logout", (c) => {
+  .post("/logout", async (c) => {
+    const sessionToken = getCookie(c, "auth_w");
+    if (!sessionToken) {
+      return c.json({
+        success: true,
+        message: "User is not logged in",
+      });
+    }
+
+    const { user, session } = await validateSessionToken(sessionToken);
+    if (user === null || session === null) {
+      return c.json({
+        success: true,
+        message: "User is not logged in",
+      });
+    }
+
+    await invalidateAllSessions(user.id);
+
     return c.text("Hello Hono!");
   });

@@ -1,3 +1,4 @@
+import Navigation from '@/components/Navigation'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/')({
@@ -5,5 +6,9 @@ export const Route = createFileRoute('/')({
 })
 
 function App() {
-  return <div className="text-center p-4 bg-red-100"></div>
+  return (
+    <>
+      <Navigation />
+    </>
+  )
 }
