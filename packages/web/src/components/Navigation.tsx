@@ -1,10 +1,17 @@
 const Navigation = () => {
   return (
-    <>
-      <nav>
-        <div className="p-3 bg-white max-w-[1200px] mx-auto"></div>
-      </nav>
-    </>
+    <nav className="navbar bg-base-100 shadow-sm">
+      <div className="navbar-start">
+        <a className="btn btn-ghost text-xl font-bold">
+          MISSILE<span className="text-primary">CHAT</span>
+        </a>
+      </div>
+
+      <div className="navbar-end gap-2">
+        <a className="btn btn-outline">LOGIN</a>
+        <a className="btn btn-primary">SIGNUP</a>
+      </div>
+    </nav>
   )
 }
 
