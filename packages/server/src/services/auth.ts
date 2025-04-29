@@ -3,6 +3,7 @@ import {
   createSession,
   generateSessionToken,
   invalidateAllSessions,
+  SECONDS_IN_A_MONTH,
   validateSessionToken,
 } from "../lib/auth";
 import { Hono } from "hono";
@@ -11,7 +12,7 @@ import db from "../../db";
 import { userTable } from "../../db/schema";
 import { eq, or } from "drizzle-orm";
 import { ProblemJson } from "../types";
-import { getCookie } from "hono/cookie";
+import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 
 export const loginSchema = z.object({
   email: z.string(),
@@ -99,6 +100,10 @@ export const authApi = new Hono()
     const generatedToken = generateSessionToken();
     await createSession(generatedToken, userdata[0].id);
 
+    setCookie(c, "auth_w", generatedToken, {
+      expires: new Date(Date.now() + SECONDS_IN_A_MONTH),
+    });
+
     return c.json({
       success: true,
       message: `${data.email} is ${data.password}`,
@@ -123,5 +128,6 @@ export const authApi = new Hono()
 
     await invalidateAllSessions(user.id);
 
+    deleteCookie(c, "auth_w");
     return c.text("Hello Hono!");
   });
